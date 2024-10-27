@@ -1,4 +1,6 @@
 const bcrypt = require("bcrypt");
+const cloudinary = require("cloudinary").v2;
+const streamifier = require("streamifier");
 
 const validObject = (object = {}, keys = [], res) => {
   const result = {};
@@ -26,4 +28,30 @@ const hashPassword = async (password) => {
   return bcrypt.hash(password, +salt);
 };
 
-module.exports = { validObject, delKeys, hashPassword };
+// Assume this is inside an async route handler in your Express app
+const uploadToCloudinary = (req, res) => {
+  return new Promise((resolve, reject) => {
+    // Create the Cloudinary upload stream with desired options
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: "uploads",
+        transformation: [
+          { quality: "auto", fetch_format: "auto" },
+          { width: 1200, height: 1200, crop: "fill", gravity: "auto" },
+        ],
+      },
+      (error, result) => {
+        // Callback to handle the response from Cloudinary
+        if (error) {
+          return reject(error);
+        }
+        resolve(result);
+      }
+    );
+
+    // Stream the buffer directly to Cloudinary
+    streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
+  });
+};
+
+module.exports = { validObject, delKeys, hashPassword, uploadToCloudinary };
