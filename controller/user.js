@@ -1,4 +1,9 @@
-const { validObject, delKeys, hashPassword } = require("../utils/utils");
+const {
+  validObject,
+  delKeys,
+  hashPassword,
+  uploadToCloudinary,
+} = require("../utils/utils");
 const UserModel = require("../model/user");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -7,7 +12,7 @@ const signup = async function (req, res, next) {
   try {
     const { username, email, password, role } = req.body;
 
-    validObject(req.body, ["username", "email", "password", "role"], res);
+    // validObject(req.body, ["username", "email", "password", "role"], res);
 
     const emailExist = await UserModel.findOne({ email });
     if (emailExist) {
@@ -15,14 +20,27 @@ const signup = async function (req, res, next) {
       return;
     }
 
-    const hash = await hashPassword(password);
-    const user = new UserModel({ username, email, password: hash, role });
-    await user.save();
+    const promises = [];
+    const p1 = hashPassword(password);
+    promises.push(p1);
+    if (req.file) {
+      const p2 = uploadToCloudinary(req);
+      promises.push(p2);
+    }
+    const [hash, result] = await Promise.all(promises);
+    const user = new UserModel({
+      username,
+      email,
+      password: hash,
+      role,
+      image: result?.secure_url || "",
+    });
+    await user.save({ validateBeforeSave: false });
 
     res.send({ message: "User created successfully" });
   } catch (error) {
     console.log(error);
-    res.json({ message: "User not created", error: error.message });
+    res.json({ message: "User not created", error: error?.message });
   }
 };
 
@@ -62,7 +80,11 @@ const login = async function (req, res, next) {
 
 const getUsers = async function (req, res, next) {
   try {
-    const users = await UserModel.find({}, { _id: 1, username: 1, email: 1 });
+    const filter = req.query;
+    const users = await UserModel.find(
+      { ...filter },
+      { _id: 1, username: 1, email: 1 }
+    );
     res.json({ data: users });
   } catch (error) {
     res.json({ message: error?.message });

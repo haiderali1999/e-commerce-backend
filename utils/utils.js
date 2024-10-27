@@ -29,7 +29,7 @@ const hashPassword = async (password) => {
 };
 
 // Assume this is inside an async route handler in your Express app
-const uploadToCloudinary = (req, res) => {
+const uploadToCloudinary = (req) => {
   return new Promise((resolve, reject) => {
     // Create the Cloudinary upload stream with desired options
     const uploadStream = cloudinary.uploader.upload_stream(

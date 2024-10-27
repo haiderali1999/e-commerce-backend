@@ -25,6 +25,7 @@ const productRouter = require("./routes/product");
 const categoryRouter = require("./routes/category");
 const subCategoriesRouter = require("./routes/subCategory");
 const { userAuthentication } = require("./middleware/auth");
+const { io } = require("./bin/www");
 
 const app = express();
 
@@ -49,7 +50,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // routes
 app.use("/", indexRouter);
-app.use("/users", usersRouter);
+app.use("/users", upload.single("image"), usersRouter);
 app.use("/products", upload.single("image"), productRouter);
 app.use("/category", categoryRouter);
 app.use("/subCategory", subCategoriesRouter);

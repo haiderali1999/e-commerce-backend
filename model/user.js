@@ -5,9 +5,14 @@ const UserSchema = new mongoose.Schema({
   username: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ["user", "guest", "admin"], required: true },
+  role: {
+    type: String,
+    enum: ["user", "admin", "seller"],
+    required: true,
+  },
+  image: String,
   refreshToken: { type: String, required: true },
-  passwordResetToken:  String ,
+  passwordResetToken: String,
   passwordResetTokenExpires: Date,
 });
 
@@ -19,7 +24,7 @@ UserSchema.methods.createResetPassordToken = function () {
     .update(resetToken)
     .digest("hex");
   this.passwordResetTokenExpires = Date.now() + 10 * 60 * 1000;
-  console.log(this)
+  console.log(this);
   return resetToken;
 };
 
